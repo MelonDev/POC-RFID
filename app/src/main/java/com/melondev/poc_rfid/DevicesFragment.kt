@@ -1,44 +1,52 @@
 package com.melondev.poc_rfid
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.content.BroadcastReceiver
-import android.content.Context
+import android.bluetooth.le.BluetoothLeScanner
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.os.Build
-import android.os.Build.VERSION.SDK_INT
+import android.os.Build.*
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.honeywell.rfidservice.EventListener
 import com.honeywell.rfidservice.RfidManager
-import com.melondev.poc_rfid.placeholder.PlaceholderContent
+import com.honeywell.rfidservice.TriggerMode
+import com.honeywell.rfidservice.rfid.RfidReader
+import com.melondev.poc_rfid.adapters.DevicesRecyclerViewAdapter
+import com.melondev.poc_rfid.callback.DeviceCallback
+import com.melondev.poc_rfid.model.DeviceModel
 
 
 class DevicesFragment : Fragment() {
 
-    private var columnCount = 1
+    private val PERMISSION_REQUEST_CODE = 1
 
-    private val mRequestPermissions: MutableList<String> = ArrayList()
+    private val permissions = arrayOf(
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.BLUETOOTH_SCAN,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+    private val requestPermissions: MutableList<String> = ArrayList()
+
+    private lateinit var recyclerview: RecyclerView
+    private lateinit var adapter: DevicesRecyclerViewAdapter
 
 
     private lateinit var myApplication: MyApplication
@@ -46,174 +54,248 @@ class DevicesFragment : Fragment() {
     private lateinit var rfidManager: RfidManager
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var bluetoothManager: BluetoothManager
+    private lateinit var bluetoothLeScanner: BluetoothLeScanner
 
-    private val PERMISSION_CODE = 1
+    private var scanning = false
+
+    private var alertDialog: AlertDialog? = null
+
 
     private val activityResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            Log.e("Bluetooth", ":request permission result ok")
-        } else {
-            Log.e("Bluetooth", ":request permission result canceled / denied")
+            scan()
         }
     }
 
-    private fun requestBluetoothPermission() {
-        Log.e("Permission","REQUEST")
-        val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-        activityResultLauncher.launch(enableBluetoothIntent)
-    }
-
-    var discoveredDevices: Set<BluetoothDevice> = emptySet()
-
-    private val receiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent) {
-            Log.e("Bluetooth", "onReceive")
-            when (intent.action) {
-                BluetoothDevice.ACTION_FOUND -> {
-                    val device: BluetoothDevice? =
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    if (device != null) {
-
-                        //Log.e("NAME",device.name)
-
-                        Log.e("ADDS",device.address)
-
-
-                        val updated = discoveredDevices.plus(device)
-                        discoveredDevices = updated
-                    }
-                    Log.i("Bluetooth", "onReceive: Device found")
-                }
-                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-                    Log.i("Bluetooth", "onReceive: Started Discovery")
-                }
-                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    Log.i("Bluetooth", "onReceive: Finished Discovery")
+    @RequiresApi(VERSION_CODES.M)
+    private fun requestPermissions(): Boolean {
+        context?.let { context ->
+            for (i in permissions.indices) {
+                if (ContextCompat.checkSelfPermission(
+                        context,
+                        permissions.get(i)
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    requestPermissions.add(permissions.get(i))
                 }
             }
-        }
-
-    }
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    fun scan(): Set<BluetoothDevice> {
-        context?.let {
-            if (ActivityCompat.checkSelfPermission(
-                    it,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                if (bluetoothAdapter.isDiscovering) {
-                    Log.e("Bluetooth","RESTART")
-
-                    bluetoothAdapter.cancelDiscovery()
-                    bluetoothAdapter.startDiscovery()
-                } else {
-                    Log.e("Bluetooth","START")
-                    bluetoothAdapter.startDiscovery()
+            if (requestPermissions.size > 0) {
+                activity?.let { activity ->
+                    ActivityCompat.requestPermissions(
+                        activity,
+                        permissions,
+                        PERMISSION_REQUEST_CODE
+                    )
                 }
-
-                Handler(Looper.getMainLooper()).postDelayed({
-                    Log.e("Bluetooth","STOP")
-                    bluetoothAdapter.cancelDiscovery()
-                }, 10000L)
+                return false
 
             }
-        }
+            return true
 
-        return discoveredDevices
+        }
+        return false
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
+
+    @RequiresApi(VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        MyApplication.getInstance()?.let { app ->
-            myApplication = app
-            app.rfidMgr?.let { manager ->
-                rfidManager = manager
-            }
-        }
+        //configManager()
+        rfidManager = MyApplication.getInstance().rfidMgr
 
-        val foundFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-        val startFilter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-        val endFilter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
 
         context?.let {
             bluetoothManager = it.getSystemService(BluetoothManager::class.java)
             bluetoothAdapter = bluetoothManager.adapter
+            bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
 
-            it.registerReceiver(receiver, foundFilter)
-            it.registerReceiver(receiver, startFilter)
-            it.registerReceiver(receiver, endFilter)
+            adapter = DevicesRecyclerViewAdapter()
+
+
+            val dialogBuilder = AlertDialog.Builder(it)
+            alertDialog = dialogBuilder.create()
+
         }
 
-        if (!bluetoothAdapter.isEnabled) {
-            requestBluetoothPermission()
-        }
+        scan()
 
-
-
-        context?.let {
-            if (ContextCompat.checkSelfPermission(
-                    it, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                getActivity()?.let { activity ->
-
-                    requestPermissions(
-                        activity, arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                        PERMISSION_CODE
-                    )
-                }
-            }
-        }
 
     }
+
+    private fun configManager() {
+        MyApplication.getInstance()?.let { app ->
+            myApplication = app
+            app.rfidMgr?.let { manager ->
+                rfidManager = manager
+                rfidManager.setBeeper(true, 10, 10)
+                rfidManager.setLEDBlink(true)
+            }
+        }
+    }
+
+    private fun enableBluetooth() {
+        val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+        activityResultLauncher.launch(enableBtIntent)
+    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_devices_list, container, false)
-        val recyclerview = view.findViewById<RecyclerView>(R.id.devices_recycler_view)
+        recyclerview = view.findViewById<RecyclerView>(R.id.devices_recycler_view)
         val scan_button = view.findViewById<FloatingActionButton>(R.id.devices_scan_button)
 
 
         scan_button.setOnClickListener {
-            scan()
-        }
-
-
-        with(recyclerview) {
-            layoutManager = when {
-                columnCount <= 1 -> LinearLayoutManager(context)
-                else -> GridLayoutManager(context, columnCount)
+            if (!bluetoothAdapter.isEnabled) {
+                enableBluetooth()
+            } else {
+                scan()
             }
-            adapter = DevicesRecyclerViewAdapter(PlaceholderContent.ITEMS)
         }
+
+        recyclerview.layoutManager = LinearLayoutManager(context)
+        recyclerview.adapter = this.adapter
 
         return view
     }
 
-
-    override fun onDestroy() {
-        super.onDestroy()
-        context?.let {
+    @RequiresApi(VERSION_CODES.M)
+    private fun scan() {
+        context?.let { context ->
             if (ActivityCompat.checkSelfPermission(
-                    it,
+                    context,
                     Manifest.permission.BLUETOOTH_SCAN
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                if (bluetoothAdapter.isDiscovering)
-                    bluetoothAdapter.cancelDiscovery()
-                return
+                requestPermissions()
             }
 
-            it.unregisterReceiver(receiver)
+            if (!scanning) { // Stops scanning after a pre-defined scan period.
+                Log.e("SCAN", "!scanning")
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    Log.e("Bluetooth LE", "STOP")
+                    scanning = false
+                    bluetoothLeScanner.stopScan(leScanCallback)
+                    dismissDialog()
+
+                }, 5000L)
+
+                adapter.clear()
+                showDialog("กำลังค้นหาอุปกรณ์...")
+                scanning = true
+                bluetoothLeScanner.startScan(leScanCallback)
+            } else {
+                scanning = false
+                bluetoothLeScanner.stopScan(leScanCallback)
+            }
         }
+
+    }
+
+    private val deviceCallback: DeviceCallback = object : DeviceCallback {
+        override fun connect(macAddress: String, position: Int) {
+            rfidManager.addEventListener(eventListener)
+            if (bluetoothAdapter.isEnabled) {
+
+                showDialog("กำลังเชื่อมต่อ...")
+                rfidManager.connect(macAddress)
+                adapter.connected(position)
+
+            } else {
+                enableBluetooth()
+            }
+        }
+
+        override fun disconnect(position: Int) {
+            if (bluetoothAdapter.isEnabled) {
+                if (rfidManager.isConnected) {
+                    showDialog("กำลังตัดการเชื่อมต่อ...")
+                    rfidManager.disconnect()
+                    adapter.disconnected(position)
+                }
+            } else {
+                enableBluetooth()
+            }
+        }
+    }
+
+    private val leScanCallback: ScanCallback = object : ScanCallback() {
+        @RequiresApi(VERSION_CODES.R)
+        override fun onScanResult(callbackType: Int, result: ScanResult) {
+            super.onScanResult(callbackType, result)
+            context?.let { context ->
+                result.device?.let { device ->
+
+                    if (ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.BLUETOOTH_CONNECT
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        requestPermissions()
+                    }
+                    if (device.name != null && device.address != null) {
+                        val deviceModel = DeviceModel(
+                            name = device.name,
+                            address = device.address,
+                            callback = deviceCallback
+                        )
+                        adapter.add(deviceModel)
+                    }
+                }
+            }
+
+        }
+    }
+
+    private val eventListener: EventListener = object : EventListener {
+        override fun onDeviceConnected(o: Any) {
+            activity?.let {
+                it.runOnUiThread(Runnable {
+                    rfidManager.createReader()
+                    //scan()
+                })
+            }
+
+        }
+
+        override fun onDeviceDisconnected(o: Any) {
+            activity?.let {
+                it.runOnUiThread(Runnable {
+                    dismissDialog()
+                })
+            }
+        }
+
+        override fun onReaderCreated(b: Boolean, rfidReader: RfidReader) {
+            MyApplication.getInstance().mRfidReader = rfidReader
+            dismissDialog()
+        }
+
+        override fun onRfidTriggered(b: Boolean) {}
+        override fun onTriggerModeSwitched(triggerMode: TriggerMode) {}
+
+
+    }
+
+    fun showDialog(message: String) {
+        alertDialog?.setTitle("แจ้งเตือน")
+        alertDialog?.setMessage(message)
+        alertDialog?.show()
+    }
+
+    fun dismissDialog() {
+        alertDialog?.dismiss()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
 
     }
 

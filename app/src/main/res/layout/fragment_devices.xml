@@ -1,34 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/device_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingHorizontal="20dp"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:background="@drawable/custom_button"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginBottom="10dp"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp">
+
 
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/tvName"
+        android:id="@+id/device_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
+        android:layout_marginStart="6dp"
+        android:textStyle="bold"
         android:textColor="#000"
-        android:textSize="16sp" />
+        android:textSize="18sp" />
 
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/tvAddr"
+        android:id="@+id/device_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvName"
+        android:layout_below="@id/device_name"
         android:layout_marginBottom="12dp"
+        android:layout_marginStart="6dp"
         android:textColor="#666"
-        android:textSize="12sp" />
+        android:textSize="14sp" />
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/tvRssi"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/device_connection"
+        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
-        android:textColor="#444"
-        android:textSize="16sp" />
+        app:cardBackgroundColor="#4CAF50"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        >
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/device_rssi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="6dp"
+            android:textColor="#FFF"
+            android:textSize="16sp"
+            android:text="เชื่อมต่อแล้ว"
+            />
+    </androidx.cardview.widget.CardView>
+
+
+
 
 </RelativeLayout>

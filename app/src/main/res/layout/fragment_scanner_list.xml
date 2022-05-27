@@ -1,13 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.recyclerview.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/list"
-    android:name="com.melondev.poc_rfid.ScannerFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
-    app:layoutManager="LinearLayoutManager"
-    tools:context=".ScannerFragment"
-    tools:listitem="@layout/fragment_scanner" />
+    >
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/scanner_recycler_view"
+        android:name="com.melondev.poc_rfid.ScannerFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:paddingTop="10dp"
+        app:layoutManager="LinearLayoutManager"
+        tools:context=".ScannerFragment"
+        tools:listitem="@layout/fragment_scanner" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/scanner_not_available"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:layout_centerInParent="true"
+        android:textColor="#000"
+        android:textStyle="bold"
+        android:text="กรุณาต่ออุปกรณ์"
+        android:textSize="32sp" />
+
+
+</RelativeLayout>

@@ -3,19 +3,28 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable/card_button.xml" value="0.1565" />
+        <entry key="app/src/main/res/drawable/card_button_default.xml" value="0.1565" />
+        <entry key="app/src/main/res/drawable/card_button_pressed.xml" value="0.1565" />
+        <entry key="app/src/main/res/drawable/custom_button.xml" value="0.1565" />
+        <entry key="app/src/main/res/drawable/custom_button_default.xml" value="0.1565" />
+        <entry key="app/src/main/res/drawable/custom_button_pressed.xml" value="0.1565" />
         <entry key="app/src/main/res/drawable/ic_baseline_devices_24.xml" value="0.1445" />
         <entry key="app/src/main/res/layout/activity_home.xml" value="0.14583333333333334" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.19610507246376813" />
         <entry key="app/src/main/res/layout/activity_mains.xml" value="0.19610507246376813" />
         <entry key="app/src/main/res/layout/content_home.xml" value="0.14583333333333334" />
         <entry key="app/src/main/res/layout/content_main.xml" value="0.19610507246376813" />
-        <entry key="app/src/main/res/layout/fragment_devices.xml" value="0.13677811550151975" />
+        <entry key="app/src/main/res/layout/dialog.xml" value="0.19610507246376813" />
+        <entry key="app/src/main/res/layout/fragment_devices.xml" value="0.29774308132183225" />
         <entry key="app/src/main/res/layout/fragment_devices_list.xml" value="0.11096014492753623" />
         <entry key="app/src/main/res/layout/fragment_first.xml" value="0.19610507246376813" />
         <entry key="app/src/main/res/layout/fragment_home_devices.xml" value="0.19610507246376813" />
         <entry key="app/src/main/res/layout/fragment_home_devices_list.xml" value="0.19610507246376813" />
-        <entry key="app/src/main/res/layout/fragment_scanner_list.xml" value="0.19610507246376813" />
+        <entry key="app/src/main/res/layout/fragment_scanner.xml" value="0.22418478260869565" />
+        <entry key="app/src/main/res/layout/fragment_scanner_list.xml" value="0.21799621582031256" />
         <entry key="app/src/main/res/layout/fragment_second.xml" value="0.19610507246376813" />
+        <entry key="app/src/main/res/layout/fragment_tags.xml" value="0.12182971014492754" />
         <entry key="app/src/main/res/menu/menu_main.xml" value="0.14583333333333334" />
         <entry key="app/src/main/res/menu/nav_menu.xml" value="0.19157562255859373" />
       </map>

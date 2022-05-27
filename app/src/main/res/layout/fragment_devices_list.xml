@@ -10,10 +10,11 @@
         android:name="com.melondev.poc_rfid.DevicesFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
         app:layoutManager="LinearLayoutManager"
         tools:context=".DevicesFragment"
+        android:paddingTop="10dp"
         tools:listitem="@layout/fragment_devices"
         />
 
@@ -29,6 +30,18 @@
         app:elevation="3dp"
         app:srcCompat="@drawable/ic_baseline_refresh_24"
         android:contentDescription="สแกน" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/devices_not_available"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:layout_centerInParent="true"
+        android:textColor="#000"
+        android:textStyle="bold"
+        android:text="กรุณาต่ออุปกรณ์"
+        android:textSize="32sp" />
 
 </RelativeLayout>
 
