@@ -3,26 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
-
+    app:startDestination="@id/devicesFragment">
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.melondev.poc_rfid.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
-
-        <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
-    </fragment>
+        android:id="@+id/devicesFragment"
+        android:name="com.melondev.poc_rfid.DevicesFragment"
+        android:label="@string/fragment_devices" />
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.melondev.poc_rfid.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
-
-        <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
-    </fragment>
+        android:id="@+id/scannerFragment"
+        android:name="com.melondev.poc_rfid.ScannerFragment"
+        android:label="@string/fragment_scanner"
+        tools:layout="@layout/fragment_scanner_list" />
+    <fragment
+        android:id="@+id/tagsFragment"
+        android:name="com.melondev.poc_rfid.TagsFragment"
+        android:label="@string/fragment_scanner"
+        tools:layout="@layout/fragment_tags" />
 </navigation>
