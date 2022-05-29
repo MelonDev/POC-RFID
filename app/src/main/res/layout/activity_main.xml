@@ -19,6 +19,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
             app:titleTextColor="@color/black"
+            app:title="ทดสอบ RFID"
             app:popupTheme="@style/Theme.POCRFID.PopupOverlay" />
 
     </com.google.android.material.appbar.AppBarLayout>

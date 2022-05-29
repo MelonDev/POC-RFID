@@ -1,70 +1,196 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
     tools:context=".TagsFragment">
 
     <LinearLayout
         android:id="@+id/tag_layout"
-android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:layout_centerVertical="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:gravity="start"
+        android:orientation="vertical"
         android:visibility="gone"
-        android:gravity="left"
 
         >
+
+        <ImageView
+            android:id="@+id/tag_image"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_margin="0dp"
+            android:layout_marginBottom="12dp"
+            android:scaleType="centerCrop"
+
+            />
+
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tag_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="0dp"
-            android:textColor="#000"
-            android:textStyle="bold"
             android:text="ชื่อ"
-            android:textSize="32sp" />
+            android:textColor="#000"
+            android:textSize="32sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:orientation="vertical"
-            >
+            android:layout_gravity="start"
+            android:orientation="vertical">
+
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tag_address"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="0dp"
-                android:textColor="#000"
-                android:textStyle="normal"
                 android:text="ไอดี"
-                android:textSize="20sp" />
+                android:textColor="#000"
+
+                android:textSize="18sp"
+                android:textStyle="normal" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tag_rssi"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="0dp"
-                android:textColor="#000"
-                android:textStyle="normal"
                 android:text="ระยะห่าง"
-                android:textSize="20sp" />
+                android:textColor="#000"
+                android:textSize="18sp"
+                android:textStyle="normal" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tag_action_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/tag_action_water_circle_outside"
+
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:cardBackgroundColor="@color/black"
+                app:cardCornerRadius="80dp"
+                app:cardElevation="0dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/tag_action_water_circle_inside"
+                        android:layout_margin="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:cardBackgroundColor="@color/white"
+                        app:cardElevation="0dp"
+                        android:layout_centerInParent="true"
+                        app:cardCornerRadius="80dp"
+                        />
+
+                    <LinearLayout
+                        android:gravity="center"
+                        android:layout_centerInParent="true"
+                        android:layout_width="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/tag_action_water_circle_image"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:src="@drawable/ic_baseline_water_24"
+                            app:tint="@color/black" />
+                        <TextView
+                            android:id="@+id/tag_action_water_circle_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="น้ำ"
+                            android:textStyle="bold"
+                            android:textSize="18sp"
+                            android:textColor="#000"
+                            />
+                    </LinearLayout>
+
+                </RelativeLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_marginStart="20dp"
+                android:id="@+id/tag_action_fertilizer_circle_outside"
+
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:cardBackgroundColor="@color/black"
+                app:cardCornerRadius="80dp"
+                app:cardElevation="0dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/tag_action_fertilizer_circle_inside"
+                        android:layout_margin="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:cardBackgroundColor="@color/white"
+                        app:cardElevation="0dp"
+                        android:layout_centerInParent="true"
+                        app:cardCornerRadius="80dp"
+                        />
+
+                    <LinearLayout
+                        android:gravity="center"
+                        android:layout_centerInParent="true"
+                        android:layout_width="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_height="wrap_content">
+                        <ImageView
+                            android:id="@+id/tag_action_fertilizer_circle_image"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:src="@drawable/ic_baseline_fertilizer_2_24"
+                            app:tint="@color/black" />
+                        <TextView
+                            android:id="@+id/tag_action_fertilizer_circle_text"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ปุ๋ย"
+                            android:textStyle="bold"
+                            android:textSize="18sp"
+                            android:textColor="#000"
+                            />
+                    </LinearLayout>
+
+                </RelativeLayout>
+
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
     </LinearLayout>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/tag_not_available"
-        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="0dp"
         android:layout_centerInParent="true"
-        android:textColor="#000"
-        android:textStyle="bold"
+        android:layout_marginTop="0dp"
         android:text="กรุณาต่ออุปกรณ์"
-        android:textSize="32sp" />
+        android:textColor="#000"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
 </RelativeLayout>

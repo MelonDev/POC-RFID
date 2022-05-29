@@ -3,10 +3,12 @@ package com.melondev.poc_rfid
 import android.Manifest
 import android.app.Activity.RESULT_OK
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build.*
@@ -30,6 +32,7 @@ import com.honeywell.rfidservice.TriggerMode
 import com.honeywell.rfidservice.rfid.RfidReader
 import com.melondev.poc_rfid.adapters.DevicesRecyclerViewAdapter
 import com.melondev.poc_rfid.callback.DeviceCallback
+import com.melondev.poc_rfid.model.DeviceDetail
 import com.melondev.poc_rfid.model.DeviceModel
 
 
@@ -98,7 +101,6 @@ class DevicesFragment : Fragment() {
         return false
     }
 
-
     @RequiresApi(VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -159,14 +161,30 @@ class DevicesFragment : Fragment() {
             }
         }
 
+
+
+
+
         recyclerview.layoutManager = LinearLayoutManager(context)
         recyclerview.adapter = this.adapter
+
+        if (shouldCallAutoConnect()){
+            val device = deviceOnPref()
+            device?.let {
+                Log.e("PREF",device.name)
+                Log.e("PREF",device.address)
+                it.callback = deviceCallback
+                //adapter.addConnectedDevice(it)
+            }
+        }
 
         return view
     }
 
     @RequiresApi(VERSION_CODES.M)
     private fun scan() {
+
+
         context?.let { context ->
             if (ActivityCompat.checkSelfPermission(
                     context,
@@ -178,6 +196,7 @@ class DevicesFragment : Fragment() {
 
             if (!scanning) { // Stops scanning after a pre-defined scan period.
                 Log.e("SCAN", "!scanning")
+                adapter.clear()
 
                 Handler(Looper.getMainLooper()).postDelayed({
                     Log.e("Bluetooth LE", "STOP")
@@ -185,9 +204,15 @@ class DevicesFragment : Fragment() {
                     bluetoothLeScanner.stopScan(leScanCallback)
                     dismissDialog()
 
+                    if (shouldCallAutoConnect() && !rfidManager.isConnected) {
+                        rfidManager.addEventListener(eventListener)
+
+                        rfidManager.connect("0C:23:69:19:5C:9B")
+                    }
                 }, 5000L)
 
-                adapter.clear()
+
+
                 showDialog("กำลังค้นหาอุปกรณ์...")
                 scanning = true
                 bluetoothLeScanner.startScan(leScanCallback)
@@ -199,14 +224,24 @@ class DevicesFragment : Fragment() {
 
     }
 
+    private fun beeping(){
+        rfidManager.setBeeper(true, 10, 10)
+        rfidManager.setBeeper(false, 10, 10)
+    }
+
+    private fun shouldCallAutoConnect(): Boolean {
+        return deviceOnPref() != null
+    }
+
     private val deviceCallback: DeviceCallback = object : DeviceCallback {
-        override fun connect(macAddress: String, position: Int) {
+        override fun connect(device: DeviceModel, position: Int) {
             rfidManager.addEventListener(eventListener)
             if (bluetoothAdapter.isEnabled) {
 
-                showDialog("กำลังเชื่อมต่อ...")
-                rfidManager.connect(macAddress)
-                adapter.connected(position)
+                //showDialog("กำลังเชื่อมต่อ...")
+                rfidManager.connect(device.address)
+                adapter.connect(position)
+                saveAddress(device)
 
             } else {
                 enableBluetooth()
@@ -216,9 +251,10 @@ class DevicesFragment : Fragment() {
         override fun disconnect(position: Int) {
             if (bluetoothAdapter.isEnabled) {
                 if (rfidManager.isConnected) {
-                    showDialog("กำลังตัดการเชื่อมต่อ...")
+                    //showDialog("กำลังตัดการเชื่อมต่อ...")
                     rfidManager.disconnect()
                     adapter.disconnected(position)
+                    clearAddress()
                 }
             } else {
                 enableBluetooth()
@@ -232,7 +268,6 @@ class DevicesFragment : Fragment() {
             super.onScanResult(callbackType, result)
             context?.let { context ->
                 result.device?.let { device ->
-
                     if (ActivityCompat.checkSelfPermission(
                             context,
                             Manifest.permission.BLUETOOTH_CONNECT
@@ -254,10 +289,71 @@ class DevicesFragment : Fragment() {
         }
     }
 
+    private fun saveAddress(device: DeviceModel) {
+        Log.e("AUTO", "SAVE")
+
+        activity?.let {
+            val sharedPref = it.getSharedPreferences("RFID", Context.MODE_PRIVATE)
+            sharedPref?.let {
+                var editor = it.edit()
+                editor.putString("NAME", device.name)
+                editor.putString("ADDRESS", device.address)
+                editor.putString("MODE", device.detail?.mode?.name.toString())
+
+                editor.commit()
+
+            }
+        }
+
+    }
+
+    private fun clearAddress() {
+        Log.e("AUTO", "CLEAR")
+        activity?.let {
+            val sharedPref = it.getSharedPreferences("RFID", Context.MODE_PRIVATE)
+            sharedPref?.let {
+                var editor = it.edit()
+                editor.putString("NAME", null)
+                editor.putString("ADDRESS", null)
+                editor.putString("MODE", null)
+
+                editor.commit()
+
+            }
+        }
+    }
+
+    private fun deviceOnPref(): DeviceModel? {
+        activity?.let {
+            val sharedPref = it.getSharedPreferences("RFID", Context.MODE_PRIVATE)
+            sharedPref?.let {
+                val name = sharedPref.getString("NAME", null)
+                val address = sharedPref.getString("ADDRESS", null)
+                val mode = sharedPref.getString("MODE", null)
+
+
+                if (name != null && address != null && mode != null) {
+                    val detail = DeviceDetail(mode=if (mode == TriggerMode.RFID.name.toString()) TriggerMode.RFID else TriggerMode.BARCODE_SCAN)
+                    return DeviceModel(name = name, address = address, callback = null, detail = detail)
+                }
+                return null
+            }
+        }
+        return null
+
+    }
+
     private val eventListener: EventListener = object : EventListener {
         override fun onDeviceConnected(o: Any) {
             activity?.let {
                 it.runOnUiThread(Runnable {
+                    Log.e("DEVICE_NOTIFICATION","onDeviceConnected")
+
+                    val mode = rfidManager.triggerMode
+                    val detail = DeviceDetail(mode = mode)
+
+                    adapter.connected(detail)
+
                     rfidManager.createReader()
                     //scan()
                 })
@@ -268,14 +364,25 @@ class DevicesFragment : Fragment() {
         override fun onDeviceDisconnected(o: Any) {
             activity?.let {
                 it.runOnUiThread(Runnable {
-                    dismissDialog()
+
+                    //dismissDialog()
                 })
             }
         }
 
         override fun onReaderCreated(b: Boolean, rfidReader: RfidReader) {
             MyApplication.getInstance().mRfidReader = rfidReader
-            dismissDialog()
+            activity?.let {
+                it.runOnUiThread(Runnable {
+
+                    //dismissDialog()
+                    adapter.readerCreated()
+                    beeping()
+                    beeping()
+
+                })
+            }
+
         }
 
         override fun onRfidTriggered(b: Boolean) {}

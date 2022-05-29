@@ -24,7 +24,8 @@
         <entry key="app/src/main/res/layout/fragment_scanner.xml" value="0.22418478260869565" />
         <entry key="app/src/main/res/layout/fragment_scanner_list.xml" value="0.21799621582031256" />
         <entry key="app/src/main/res/layout/fragment_second.xml" value="0.19610507246376813" />
-        <entry key="app/src/main/res/layout/fragment_tags.xml" value="0.12182971014492754" />
+        <entry key="app/src/main/res/layout/fragment_tags.xml" value="0.2477986432503963" />
+        <entry key="app/src/main/res/layout/tag_sheet.xml" value="0.22418478260869565" />
         <entry key="app/src/main/res/menu/menu_main.xml" value="0.14583333333333334" />
         <entry key="app/src/main/res/menu/nav_menu.xml" value="0.19157562255859373" />
       </map>

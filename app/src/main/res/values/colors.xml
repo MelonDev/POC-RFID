@@ -13,4 +13,15 @@
     <color name="colorCustomButtonDisable">#D5D5D5</color>
     <color name="colorDialogWhiteBackground">#61555555</color>
 
+    <color name="deviceConnectingColor">#FFD637</color>
+    <color name="onDeviceConnectingColor">#403612</color>
+
+    <color name="deviceConnectedColor">#4CAF50</color>
+
+    <color name="enableColor">#72AF3F</color>
+    <color name="disableColor">#E45050</color>
+
+
+
+
 </resources>

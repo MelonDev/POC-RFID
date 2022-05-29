@@ -30,29 +30,67 @@
         android:layout_marginBottom="12dp"
         android:layout_marginStart="6dp"
         android:textColor="#666"
+        android:text="Message"
+
         android:textSize="14sp" />
+
+    <LinearLayout
+        android:visibility="visible"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="6dp"
+        android:id="@+id/device_detail"
+
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_below="@id/device_address"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#666"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:text="รายละเอียด"
+            />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/device_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#666"
+            android:text="Message"
+
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+
 
     <androidx.cardview.widget.CardView
         android:id="@+id/device_connection"
-        android:visibility="gone"
+        android:visibility="visible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
+        android:layout_centerVertical="false"
+        android:layout_marginTop="16dp"
+
         app:cardBackgroundColor="#4CAF50"
         app:cardCornerRadius="20dp"
         app:cardElevation="0dp"
         >
         <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/device_rssi"
+            android:id="@+id/device_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingHorizontal="16dp"
             android:paddingVertical="6dp"
             android:textColor="#FFF"
             android:textSize="16sp"
-            android:text="เชื่อมต่อแล้ว"
+            android:text=""
             />
+
     </androidx.cardview.widget.CardView>
 
 

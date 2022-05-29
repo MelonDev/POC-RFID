@@ -5,16 +5,21 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.honeywell.rfidservice.EventListener
 import com.honeywell.rfidservice.RfidManager
 import com.honeywell.rfidservice.TriggerMode
 import com.honeywell.rfidservice.rfid.*
 import com.melondev.poc_rfid.adapters.DevicesRecyclerViewAdapter
 import com.melondev.poc_rfid.adapters.ScannerRecyclerViewAdapter
+import com.melondev.poc_rfid.callback.DeviceCallback
+import com.melondev.poc_rfid.callback.TagCallback
 import com.melondev.poc_rfid.model.TagModel
 import com.melondev.poc_rfid.placeholder.PlaceholderContent
 import java.text.DateFormat
@@ -31,7 +36,7 @@ class ScannerFragment : Fragment() {
 
     private lateinit var recyclerview: RecyclerView
     private lateinit var adapter: ScannerRecyclerViewAdapter
-    private lateinit var notAvailableView : TextView
+    private lateinit var notAvailableView: TextView
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,9 +52,14 @@ class ScannerFragment : Fragment() {
             arrayOf(
                 TagModel(
                     name = "ต้นประดู่",
-                    address = "E2806894000050106F36D612"
+                    address = "E2806894000050106F36D612",
+                    image = R.drawable.padauk
                 ),
-                TagModel(name = "ต้นมะขาม", address = "E2005175881902411140A540")
+                TagModel(
+                    name = "ต้นมะขาม",
+                    address = "E2005175881902411140A540",
+                    image = R.drawable.tamarind
+                )
             )
         )
 
@@ -69,7 +79,7 @@ class ScannerFragment : Fragment() {
         if (isReaderAvailable()) {
             notAvailableView.visibility = View.GONE
 
-        }else{
+        } else {
             notAvailableView.visibility = View.VISIBLE
 
         }
@@ -98,15 +108,19 @@ class ScannerFragment : Fragment() {
             notAvailableView.visibility = View.VISIBLE
 
         }
+
         override fun onDeviceDisconnected(o: Any) {
             notAvailableView.visibility = View.VISIBLE
 
         }
+
         override fun onReaderCreated(b: Boolean, rfidReader: RfidReader) {
             notAvailableView.visibility = View.GONE
         }
+
         override fun onRfidTriggered(trigger: Boolean) {
             if (!trigger) {
+                beeping()
                 stopRead()
             } else {
                 read()
@@ -114,6 +128,11 @@ class ScannerFragment : Fragment() {
         }
 
         override fun onTriggerModeSwitched(triggerMode: TriggerMode) {}
+    }
+
+    private fun beeping() {
+        rfidManager.setBeeper(true, 10, 10)
+        rfidManager.setBeeper(false, 10, 10)
     }
 
     private fun isReaderAvailable(): Boolean {
@@ -150,6 +169,38 @@ class ScannerFragment : Fragment() {
         }
     }
 
+    private val tagCallback: TagCallback = object : TagCallback {
+        override fun onClick(tag: TagModel) {
+            context?.let { context ->
+                val dialog = BottomSheetDialog(context)
+                val view = layoutInflater.inflate(R.layout.tag_sheet, null)
+
+                view.apply {
+                    val nameView = findViewById<TextView>(R.id.tag_sheet_name)
+                    val addressView = findViewById<TextView>(R.id.tag_sheet_address)
+                    val rssiView = findViewById<TextView>(R.id.tag_sheet_rssi)
+                    val imageView = findViewById<ImageView>(R.id.tag_sheet_image)
+
+
+                    nameView.text = tag.name ?: "ไม่ทราบชี่อ"
+                    addressView.text = "ไอดี: " + (tag.address ?: "ไม่ทราบ")
+                    rssiView.text = "ระยะห่าง: " + (tag.rssi ?: "ไม่ทราบ").toString()
+
+                    tag.image?.let { image ->
+                        imageView.visibility = View.VISIBLE
+                        imageView.setImageResource(image)
+                    } ?: run {
+                        imageView.visibility = View.GONE
+                    }
+                }
+
+                dialog.setCancelable(true)
+                dialog.setContentView(view)
+                dialog.show()
+            }
+        }
+    }
+
     private val dataListener =
         OnTagReadListener { t ->
 
@@ -170,12 +221,18 @@ class ScannerFragment : Fragment() {
                             }
                         }
 
-                        if(filterData.isNotEmpty()){
+                        if (filterData.isNotEmpty()) {
                             val item = filterData[0]
-                            val tag = TagModel(name = item.name,address = epc, rssi = rssi)
+                            val tag = TagModel(
+                                name = item.name,
+                                address = epc,
+                                rssi = rssi,
+                                callback = tagCallback,
+                                image = item.image
+                            )
                             data.add(tag)
-                        }else {
-                            val tag = TagModel(address = epc, rssi = rssi)
+                        } else {
+                            val tag = TagModel(address = epc, rssi = rssi, callback = tagCallback)
                             data.add(tag)
                         }
 

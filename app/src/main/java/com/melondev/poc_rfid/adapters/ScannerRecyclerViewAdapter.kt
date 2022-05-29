@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 
 import com.melondev.poc_rfid.databinding.FragmentScannerBinding
@@ -31,6 +33,12 @@ class ScannerRecyclerViewAdapter : RecyclerView.Adapter<ScannerRecyclerViewAdapt
             holder.nameView.text = tag.name ?: "ไม่ทราบชี่อ"
             holder.addressView.text = "ไอดี: " + (tag.address ?: "ไม่ทราบ")
             holder.rssiView.text = "ระยะห่าง: " + (tag.rssi ?: "ไม่ทราบ").toString()
+
+            holder.layoutView.setOnClickListener {
+                tag.callback?.let {
+                    it.onClick(tag)
+                }
+            }
         }
 
     }
@@ -42,7 +50,7 @@ class ScannerRecyclerViewAdapter : RecyclerView.Adapter<ScannerRecyclerViewAdapt
         val nameView: TextView = binding.scannerName
         val addressView: TextView = binding.scannerAddress
         val rssiView: TextView = binding.scannerRssi
-
+        val layoutView : RelativeLayout = binding.scannerLayout
     }
 
     fun add(tag: TagModel) {
