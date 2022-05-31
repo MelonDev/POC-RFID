@@ -11,6 +11,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.honeywell.rfidservice.EventListener
 import com.honeywell.rfidservice.RfidManager
 import com.honeywell.rfidservice.TriggerMode
@@ -18,7 +21,10 @@ import com.honeywell.rfidservice.rfid.OnTagReadListener
 import com.honeywell.rfidservice.rfid.RfidReader
 import com.honeywell.rfidservice.rfid.TagAdditionData
 import com.honeywell.rfidservice.rfid.TagReadOption
-import com.melondev.poc_rfid.model.TagActionModel
+import com.melondev.poc_rfid.adapters.ListDialogRecyclerViewAdapter
+import com.melondev.poc_rfid.callback.ItemCallback
+import com.melondev.poc_rfid.model.ItemModel
+import com.melondev.poc_rfid.model.TagEnvironment
 import com.melondev.poc_rfid.model.TagModel
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -31,7 +37,6 @@ class TagsFragment : Fragment() {
     private var tags: MutableList<String> = ArrayList()
 
 
-    private var mockData: MutableList<TagModel> = ArrayList()
     private lateinit var notAvailableView: TextView
     private lateinit var layoutView: LinearLayout
 
@@ -40,17 +45,33 @@ class TagsFragment : Fragment() {
     private lateinit var rssiView: TextView
     private lateinit var imageView: ImageView
 
+    private lateinit var areaView: CardView
+    private lateinit var areaTextView: TextView
+    private lateinit var areaButtonView: LinearLayout
+
+    private lateinit var statusTextView: TextView
+    private lateinit var statusButtonView: LinearLayout
+
     private lateinit var actionLayout: LinearLayout
 
     private lateinit var waterOutsideView: CardView
     private lateinit var waterInsideView: CardView
     private lateinit var waterImageView: ImageView
     private lateinit var waterTextView: TextView
+    private lateinit var waterButtonView: LinearLayout
+
 
     private lateinit var fertilizerOutsideView: CardView
     private lateinit var fertilizerInsideView: CardView
     private lateinit var fertilizerImageView: ImageView
     private lateinit var fertilizerTextView: TextView
+    private lateinit var fertilizerButtonView: LinearLayout
+
+    private lateinit var sharedPref: SharePref
+
+    private var dialog :BottomSheetDialog? = null
+
+    private var selectedTag :TagModel? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,26 +79,14 @@ class TagsFragment : Fragment() {
 
         rfidManager = MyApplication.getInstance().rfidMgr
         if (rfidManager.isConnected) {
-            rfidReader = MyApplication.getInstance().mRfidReader
+            if (rfidManager.readerAvailable()) {
+                rfidReader = MyApplication.getInstance().mRfidReader
+            }
         }
 
-        mockData.addAll(
-            arrayOf(
-                TagModel(
-                    name = "ต้นประดู่",
-                    address = "E2806894000050106F36D612",
-                    image = R.drawable.padauk,
-                    action = TagActionModel()
-                ),
-                TagModel(
-                    name = "ต้นมะขาม",
-                    address = "E2005175881902411140A540",
-                    image = R.drawable.tamarind,
-                    action = TagActionModel()
-
-                )
-            )
-        )
+        context?.let {
+            sharedPref = SharePref(it)
+        }
 
     }
 
@@ -91,20 +100,35 @@ class TagsFragment : Fragment() {
         nameView = view.findViewById<TextView>(R.id.tag_name)
         addressView = view.findViewById<TextView>(R.id.tag_address)
         rssiView = view.findViewById<TextView>(R.id.tag_rssi)
+
         layoutView = view.findViewById<LinearLayout>(R.id.tag_layout)
         imageView = view.findViewById<ImageView>(R.id.tag_image)
 
+        areaView = view.findViewById<CardView>(R.id.tag_area)
+        areaTextView = view.findViewById<TextView>(R.id.tag_area_text)
+        areaButtonView = view.findViewById<LinearLayout>(R.id.tag_area_button)
+
+
         actionLayout = view.findViewById<LinearLayout>(R.id.tag_action_layout)
+
+        statusTextView = view.findViewById<TextView>(R.id.tag_action_status_text)
+        statusButtonView = view.findViewById<LinearLayout>(R.id.tag_action_status_button)
 
         waterOutsideView = view.findViewById<CardView>(R.id.tag_action_water_circle_outside)
         waterInsideView = view.findViewById<CardView>(R.id.tag_action_water_circle_inside)
         waterImageView = view.findViewById<ImageView>(R.id.tag_action_water_circle_image)
         waterTextView = view.findViewById<TextView>(R.id.tag_action_water_circle_text)
+        waterButtonView = view.findViewById<LinearLayout>(R.id.tag_action_water_circle_button)
 
-        fertilizerOutsideView = view.findViewById<CardView>(R.id.tag_action_fertilizer_circle_outside)
+
+        fertilizerOutsideView =
+            view.findViewById<CardView>(R.id.tag_action_fertilizer_circle_outside)
         fertilizerInsideView = view.findViewById<CardView>(R.id.tag_action_fertilizer_circle_inside)
         fertilizerImageView = view.findViewById<ImageView>(R.id.tag_action_fertilizer_circle_image)
         fertilizerTextView = view.findViewById<TextView>(R.id.tag_action_fertilizer_circle_text)
+        fertilizerButtonView =
+            view.findViewById<LinearLayout>(R.id.tag_action_fertilizer_circle_button)
+
 
 
 
@@ -136,6 +160,7 @@ class TagsFragment : Fragment() {
     private val eventListener: EventListener = object : EventListener {
         override fun onDeviceConnected(o: Any) {
             notAvailableView.visibility = View.VISIBLE
+
             layoutView.visibility = View.GONE
             actionLayout.visibility = View.GONE
 
@@ -168,7 +193,7 @@ class TagsFragment : Fragment() {
         override fun onTriggerModeSwitched(triggerMode: TriggerMode) {}
     }
 
-    private fun beeping(){
+    private fun beeping() {
         rfidManager.setBeeper(true, 10, 10)
         rfidManager.setBeeper(false, 10, 10)
     }
@@ -176,10 +201,42 @@ class TagsFragment : Fragment() {
     private fun isReaderAvailable(): Boolean {
 
         if (rfidManager.isConnected) {
-            return rfidReader.available()
+            if (rfidManager.readerAvailable()) {
+                return rfidReader.available()
+            }
+            return false
         }
 
         return false
+    }
+
+    private val locationItemCallback: ItemCallback = object : ItemCallback {
+        override fun onClick(item: ItemModel) {
+            selectedTag?.let {
+                sharedPref.putString("${it.address}@location", item.name)
+                sharedPref.commit()
+
+                areaTextView.text = item.name ?: "ไม่ทราบ"
+                it.environment?.location = item.name
+
+                dialog?.dismiss()
+            }
+
+        }
+    }
+
+    private val statusItemCallback: ItemCallback = object : ItemCallback {
+        override fun onClick(item: ItemModel) {
+            selectedTag?.let {
+                sharedPref.putString("${it.address}@status", item.name)
+                sharedPref.commit()
+
+                statusTextView.text = item.name ?: "ไม่ทราบ"
+                it.environment?.status = item.name
+
+                dialog?.dismiss()
+            }
+        }
     }
 
     private fun read() {
@@ -199,12 +256,14 @@ class TagsFragment : Fragment() {
     }
 
     private fun showTag(tag: TagModel?) {
-        tag?.let {tag->
+        tag?.let { tag ->
             layoutView.visibility = View.VISIBLE
 
+            selectedTag = tag
+
             nameView.text = tag.name ?: "ไม่ทราบชี่อ"
-            addressView.text = "ไอดี: " + (tag.address ?: "ไม่ทราบ")
-            rssiView.text = "ระยะห่าง: " + (tag.rssi ?: "ไม่ทราบ").toString()
+            addressView.text = "ไอดี: ${(tag.address ?: "ไม่ทราบ")}"
+            rssiView.text = "ความแรงสัญญาณ: ${(tag.rssi ?: "ไม่ทราบ")}"
 
             tag.image?.let { image ->
                 imageView.visibility = View.VISIBLE
@@ -215,29 +274,115 @@ class TagsFragment : Fragment() {
                 imageView.visibility = View.GONE
             }
 
-            tag.action?.let { action ->
+            selectedTag?.environment?.let { environment ->
+                areaView.visibility = View.VISIBLE
                 actionLayout.visibility = View.VISIBLE
 
-                context?.let {context ->
+                areaTextView.text = environment.location ?: "ไม่ทราบ"
+                statusTextView.text = environment.status ?: "ไม่ทราบ"
 
-                    waterAction(false)
 
-                    waterOutsideView.setOnClickListener {
-                        waterAction(true)
+                waterAction(environment.water)
+                fertilizerAction(environment.fertilizer)
+
+
+                context?.let { context ->
+                    waterButtonView.setOnClickListener {
+                        environment.water = !environment.water
+                        sharedPref.putBoolean("${tag.address}@water", environment.water)
+                        sharedPref.commit()
+                        waterAction(environment.water)
                     }
 
-                    fertilizerAction(false)
+                    fertilizerButtonView.setOnClickListener {
+                        environment.fertilizer = !environment.fertilizer
 
-                    fertilizerOutsideView.setOnClickListener {
-                        fertilizerAction(true)
+                        sharedPref.putBoolean("${tag.address}@fertilizer", environment.fertilizer)
+                        sharedPref.commit()
+                        fertilizerAction(environment.fertilizer)
+                    }
+
+                    areaButtonView.setOnClickListener {
+
+                        var choices: MutableList<ItemModel> = ArrayList()
+                        choices.apply {
+                            add(
+                                ItemModel(
+                                    name = "แปลง A",
+                                    enable = environment.location.checkItem("แปลง A")
+                                )
+                            )
+                            add(
+                                ItemModel(
+                                    name = "แปลง B",
+                                    enable = environment.location.checkItem("แปลง B")
+                                )
+                            )
+                            add(
+                                ItemModel(
+                                    name = "แปลง C",
+                                    enable = environment.location.checkItem("แปลง C")
+                                )
+                            )
+                            add(
+                                ItemModel(
+                                    name = "แปลง D",
+                                    enable = environment.location.checkItem("แปลง D")
+                                )
+                            )
+                        }
+
+                        showDialog(
+                            title = "กรุณาเลือกพื้นที่",
+                            choices = choices,
+                            callback = locationItemCallback
+                        )
+                    }
+
+                    statusButtonView.setOnClickListener {
+
+                        var choices: MutableList<ItemModel> = ArrayList()
+                        choices.apply {
+                            add(
+                                ItemModel(
+                                    name = "ปกติ",
+                                    enable = environment.status.checkItem("ปกติ")
+                                )
+                            )
+                            add(
+                                ItemModel(
+                                    name = "ขาดน้ำ",
+                                    enable = environment.status.checkItem("ขาดน้ำ")
+                                )
+                            )
+                            add(
+                                ItemModel(
+                                    name = "เฉา",
+                                    enable = environment.status.checkItem("เฉา")
+                                )
+                            )
+                            add(
+                                ItemModel(
+                                    name = "ตาย",
+                                    enable = environment.status.checkItem("ตาย")
+                                )
+                            )
+                        }
+
+                        showDialog(
+                            title = "กรุณาเลือกสถานะ",
+                            choices = choices,
+                            callback = statusItemCallback
+                        )
                     }
 
 
                 }
 
 
+            } ?: run {
+                areaView.visibility = View.GONE
 
-            }?: run {
                 actionLayout.visibility = View.GONE
             }
 
@@ -246,8 +391,49 @@ class TagsFragment : Fragment() {
         }
     }
 
-    private fun waterAction(isEnabled :Boolean){
-        context?.let {context ->
+    private fun String?.checkItem(y: String?): Boolean {
+        if (this != null && y != null) {
+            return this.contains(y)
+        }
+        return false
+    }
+
+    private fun showDialog(
+        title: String? = null,
+        choices: MutableList<ItemModel>?,
+        callback: ItemCallback? = null
+    ) {
+        context?.let { context ->
+            dialog = BottomSheetDialog(context)
+            dialog?.apply {
+                val view = layoutInflater.inflate(R.layout.fragment_list_dialog_list, null)
+
+                view.apply {
+                    val titleView = findViewById<TextView>(R.id.list_dialog_name)
+                    titleView.text = title ?: "ตัวเลือก"
+
+                    val recyclerView = findViewById<RecyclerView>(R.id.list_dialog_recyclerview)
+
+                    recyclerView.layoutManager = LinearLayoutManager(context)
+                    val adapter = ListDialogRecyclerViewAdapter()
+                    adapter.callback = callback
+                    recyclerView.adapter = adapter
+                    choices?.let {
+                        adapter.addAll(it)
+                    }
+
+                }
+
+                setCancelable(true)
+                setContentView(view)
+                show()
+            }
+
+        }
+    }
+
+    private fun waterAction(isEnabled: Boolean) {
+        context?.let { context ->
             val enableColor = ContextCompat.getColor(
                 context,
                 R.color.enableColor
@@ -259,7 +445,8 @@ class TagsFragment : Fragment() {
             )
 
             val waterColor = if (isEnabled) enableColor else disableColor
-            val image = if (isEnabled) R.drawable.ic_baseline_check_24 else R.drawable.ic_baseline_water_24
+            val image =
+                if (isEnabled) R.drawable.ic_baseline_check_24 else R.drawable.ic_baseline_water_24
             waterOutsideView.setCardBackgroundColor(waterColor)
             waterTextView.setTextColor(waterColor)
             waterImageView.setColorFilter(waterColor)
@@ -270,8 +457,8 @@ class TagsFragment : Fragment() {
         }
     }
 
-    private fun fertilizerAction(isEnabled :Boolean){
-        context?.let {context ->
+    private fun fertilizerAction(isEnabled: Boolean) {
+        context?.let { context ->
             val enableColor = ContextCompat.getColor(
                 context,
                 R.color.enableColor
@@ -283,7 +470,8 @@ class TagsFragment : Fragment() {
             )
 
             val fertilizerColor = if (isEnabled) enableColor else disableColor
-            val image = if (isEnabled) R.drawable.ic_baseline_check_24 else R.drawable.ic_baseline_fertilizer_2_24
+            val image =
+                if (isEnabled) R.drawable.ic_baseline_check_24 else R.drawable.ic_baseline_fertilizer_2_24
 
 
             fertilizerOutsideView.setCardBackgroundColor(fertilizerColor)
@@ -312,22 +500,32 @@ class TagsFragment : Fragment() {
                     for (trd in t) {
                         val epc = trd.epcHexStr
                         val rssi = trd.rssi
-                        Log.e("EPC", epc)
-                        Log.e("RSSI", Integer.toString(rssi))
 
-                        val filterData = mockData.filter {
-                            it.address?.let {
-                                it.contains(epc)
-                            } ?: run {
-                                false
-                            }
-                        }
+                        val rawName: String? = sharedPref.getString("$epc@name", null)
 
-                        if (filterData.isNotEmpty()) {
-                            val item = filterData[0]
-                            val tag = TagModel(name = item.name, address = epc, rssi = rssi,image=item.image,action=item.action)
+                        rawName?.let { name ->
+                            val image: Int? = sharedPref.getInt("$epc@image", null)
+                            val water: Boolean = sharedPref.getBoolean("$epc@water", false)
+                            val fertilizer: Boolean =
+                                sharedPref.getBoolean("$epc@fertilizer", false)
+                            val location: String? = sharedPref.getString("$epc@location", null)
+                            val status: String? = sharedPref.getString("$epc@status", null)
+
+                            val tag = TagModel(
+                                name = name,
+                                address = epc,
+                                rssi = rssi,
+                                image = image,
+                                environment = TagEnvironment(
+                                    water = water,
+                                    fertilizer = fertilizer,
+                                    location = location,
+                                    status = status
+                                )
+                            )
                             data.add(tag)
-                        } else {
+
+                        } ?: run {
                             val tag = TagModel(address = epc, rssi = rssi)
                             data.add(tag)
                         }

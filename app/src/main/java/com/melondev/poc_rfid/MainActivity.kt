@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -35,12 +36,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private lateinit var rfidManager: RfidManager
+    private lateinit var sharedPref: SharePref
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+
+        sharedPref = SharePref(this)
+
+        preparingTreePref()
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
         val navController = findNavController(R.id.nav_host_fragment_content_main)
@@ -50,6 +56,26 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         rfidManager.disconnect()
         super.onDestroy()
+    }
+
+    private fun preparingTreePref() {
+        sharedPref.putString("E2806894000050106F36D612@name", "ต้นประดู่")
+        sharedPref.putInt("E2806894000050106F36D612@image", R.drawable.padauk)
+        sharedPref.putBoolean("E2806894000050106F36D612@water", false)
+        sharedPref.putBoolean("E2806894000050106F36D612@fertilizer", false)
+        sharedPref.putString("E2806894000050106F36D612@location", "แปลง A")
+        sharedPref.putString("E2806894000050106F36D612@status", "เฉา")
+        sharedPref.putString("E2806894000050106F36D612@image_report", null)
+
+        sharedPref.putString("E2005175881902411140A540@name", "ต้นมะขาม")
+        sharedPref.putInt("E2005175881902411140A540@image", R.drawable.tamarind)
+        sharedPref.putBoolean("E2005175881902411140A540@water", false)
+        sharedPref.putBoolean("E2005175881902411140A540@fertilizer", false)
+        sharedPref.putString("E2005175881902411140A540@location", "แปลง C")
+        sharedPref.putString("E2005175881902411140A540@status", "ขาดน้ำ")
+        sharedPref.putString("E2005175881902411140A540@image_report", null)
+
+        sharedPref.commit()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

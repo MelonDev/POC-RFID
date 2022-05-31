@@ -41,12 +41,11 @@ class DevicesRecyclerViewAdapter : RecyclerView.Adapter<DevicesRecyclerViewAdapt
                 addressView.text = device.address
                 if (device.status > -1) {
                     deviceConnection.visibility = View.VISIBLE
-                    Log.e("DETAILL", (device.detail != null).toString())
                     deviceDetail.visibility = if (device.detail != null) View.VISIBLE else View.GONE
                     device.detail?.let { detail ->
                         detail.mode?.let {
                             deviceMode.visibility = View.VISIBLE
-                            deviceMode.text = "โหมด: " + it.name
+                            deviceMode.text = "โหมด: ${it.name}"
                         } ?: run {
                             deviceMode.visibility = View.GONE
                         }

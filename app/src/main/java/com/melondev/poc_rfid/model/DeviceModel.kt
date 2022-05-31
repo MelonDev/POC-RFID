@@ -16,7 +16,7 @@ data class DeviceModel(
     var status: Int = -1,
     var callback: DeviceCallback?,
     var detail: DeviceDetail? = null
-)
+): BaseModel()
 
 data class DeviceDetail(
     val mode: TriggerMode?

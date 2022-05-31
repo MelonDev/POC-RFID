@@ -6,8 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,12 +16,11 @@ import com.honeywell.rfidservice.EventListener
 import com.honeywell.rfidservice.RfidManager
 import com.honeywell.rfidservice.TriggerMode
 import com.honeywell.rfidservice.rfid.*
-import com.melondev.poc_rfid.adapters.DevicesRecyclerViewAdapter
+import com.melondev.poc_rfid.adapters.ListDialogRecyclerViewAdapter
 import com.melondev.poc_rfid.adapters.ScannerRecyclerViewAdapter
-import com.melondev.poc_rfid.callback.DeviceCallback
+import com.melondev.poc_rfid.callback.ItemCallback
 import com.melondev.poc_rfid.callback.TagCallback
-import com.melondev.poc_rfid.model.TagModel
-import com.melondev.poc_rfid.placeholder.PlaceholderContent
+import com.melondev.poc_rfid.model.*
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 
@@ -31,8 +30,15 @@ class ScannerFragment : Fragment() {
     private lateinit var rfidReader: RfidReader
     private var tags: MutableList<String> = ArrayList()
 
-    private var mockData: MutableList<TagModel> = ArrayList()
+    private var dialog: BottomSheetDialog? = null
 
+    private lateinit var sharedPref: SharePref
+
+    private var selectedGroup: String = "ไม่จัดกลุ่ม"
+
+
+    private lateinit var groupCardView: CardView
+    private lateinit var groupTextView: TextView
 
     private lateinit var recyclerview: RecyclerView
     private lateinit var adapter: ScannerRecyclerViewAdapter
@@ -47,22 +53,9 @@ class ScannerFragment : Fragment() {
         }
 
         adapter = ScannerRecyclerViewAdapter()
-
-        mockData.addAll(
-            arrayOf(
-                TagModel(
-                    name = "ต้นประดู่",
-                    address = "E2806894000050106F36D612",
-                    image = R.drawable.padauk
-                ),
-                TagModel(
-                    name = "ต้นมะขาม",
-                    address = "E2005175881902411140A540",
-                    image = R.drawable.tamarind
-                )
-            )
-        )
-
+        context?.let {
+            sharedPref = SharePref(it)
+        }
 
     }
 
@@ -76,6 +69,10 @@ class ScannerFragment : Fragment() {
         recyclerview = view.findViewById<RecyclerView>(R.id.scanner_recycler_view)
         notAvailableView = view.findViewById<TextView>(R.id.scanner_not_available)
 
+        groupCardView = view.findViewById<CardView>(R.id.scanner_group_card)
+        groupTextView = view.findViewById<TextView>(R.id.scanner_group_text)
+
+
         if (isReaderAvailable()) {
             notAvailableView.visibility = View.GONE
 
@@ -88,6 +85,37 @@ class ScannerFragment : Fragment() {
         recyclerview.adapter = this.adapter
 
 
+
+        groupCardView.setOnClickListener {
+
+            var choices: MutableList<ItemModel> = ArrayList()
+            choices.apply {
+                add(
+                    ItemModel(
+                        name = "ไม่จัดกลุ่ม",
+                        enable = selectedGroup.contains("ไม่จัดกลุ่ม")
+                    )
+                )
+                add(
+                    ItemModel(
+                        name = "ตามตำแหน่ง",
+                        enable = selectedGroup.contains("ตามตำแหน่ง")
+                    )
+                )
+                add(
+                    ItemModel(
+                        name = "ตามสถานะ",
+                        enable = selectedGroup.contains("ตามสถานะ")
+                    )
+                )
+            }
+
+            showDialog(
+                title = "กรุณาเลือกการจัดกลุ่ม",
+                choices = choices,
+                callback = groupItemCallback
+            )
+        }
 
         return view
     }
@@ -138,7 +166,10 @@ class ScannerFragment : Fragment() {
     private fun isReaderAvailable(): Boolean {
 
         if (rfidManager.isConnected) {
-            return rfidReader.available()
+            if (rfidManager.readerAvailable()) {
+                return rfidReader.available()
+            }
+            return false
         }
 
         return false
@@ -183,8 +214,8 @@ class ScannerFragment : Fragment() {
 
 
                     nameView.text = tag.name ?: "ไม่ทราบชี่อ"
-                    addressView.text = "ไอดี: " + (tag.address ?: "ไม่ทราบ")
-                    rssiView.text = "ระยะห่าง: " + (tag.rssi ?: "ไม่ทราบ").toString()
+                    addressView.text = "ไอดี: ${(tag.address ?: "ไม่ทราบ")}"
+                    rssiView.text = "ความแรงสัญญาณ: ${(tag.rssi ?: "ไม่ทราบ")}"
 
                     tag.image?.let { image ->
                         imageView.visibility = View.VISIBLE
@@ -201,45 +232,147 @@ class ScannerFragment : Fragment() {
         }
     }
 
+    private val groupItemCallback: ItemCallback = object : ItemCallback {
+        override fun onClick(item: ItemModel) {
+            /*selectedTag?.let {
+                sharedPref.putString("${it.address}@location", item.name)
+                sharedPref.commit()
+
+                areaTextView.text = item.name ?: "ไม่ทราบ"
+                it.environment?.location = item.name
+
+            }
+             */
+
+            selectedGroup = item.name
+            groupTextView.text = item.name
+
+
+            dialog?.dismiss()
+
+
+        }
+    }
+
+    private fun showDialog(
+        title: String? = null,
+        choices: MutableList<ItemModel>?,
+        callback: ItemCallback? = null
+    ) {
+        context?.let { context ->
+            dialog = BottomSheetDialog(context)
+            dialog?.apply {
+                val view = layoutInflater.inflate(R.layout.fragment_list_dialog_list, null)
+
+                view.apply {
+                    val titleView = findViewById<TextView>(R.id.list_dialog_name)
+                    titleView.text = title ?: "ตัวเลือก"
+
+                    val recyclerView = findViewById<RecyclerView>(R.id.list_dialog_recyclerview)
+
+                    recyclerView.layoutManager = LinearLayoutManager(context)
+                    val adapter = ListDialogRecyclerViewAdapter()
+                    adapter.callback = callback
+                    recyclerView.adapter = adapter
+                    choices?.let {
+                        adapter.addAll(it)
+                    }
+
+                }
+
+                setCancelable(true)
+                setContentView(view)
+                show()
+            }
+
+        }
+    }
+
+
     private val dataListener =
         OnTagReadListener { t ->
 
             activity?.let {
                 it.runOnUiThread(Runnable {
+
                     val data: MutableList<TagModel> = ArrayList()
                     for (trd in t) {
                         val epc = trd.epcHexStr
                         val rssi = trd.rssi
-                        Log.e("EPC", epc)
-                        Log.e("RSSI", Integer.toString(rssi))
+                        val rawName: String? = sharedPref.getString("$epc@name", null)
 
-                        val filterData = mockData.filter {
-                            it.address?.let {
-                                it.contains(epc)
-                            } ?: run {
-                                false
+                        rawName?.let { name ->
+                            val image: Int? = sharedPref.getInt("$epc@image", null)
+                            val water: Boolean = sharedPref.getBoolean("$epc@water", false)
+                            val fertilizer: Boolean =
+                                sharedPref.getBoolean("$epc@fertilizer", false)
+                            val location: String? = sharedPref.getString("$epc@location", null)
+                            val status: String? = sharedPref.getString("$epc@status", null)
+
+                            val tag = TagModel(
+                                name = name,
+                                address = epc,
+                                rssi = rssi,
+                                image = image,
+                                callback = tagCallback,
+                                environment = TagEnvironment(
+                                    water = water,
+                                    fertilizer = fertilizer,
+                                    location = location,
+                                    status = status
+                                )
+                            )
+                            data.add(tag)
+
+                        } ?: run {
+                            val tag = TagModel(address = epc, rssi = rssi)
+                            data.add(tag)
+                        }
+
+                    }
+
+                    val groupData: MutableList<BaseModel> = ArrayList()
+
+                    if (selectedGroup.contains("ไม่จัดกลุ่ม")) {
+                        data.sortByDescending {
+                            it.rssi
+                        }
+                        groupData.addAll(data)
+                        adapter.addAll(groupData)
+                    }else {
+                        var groupTag :Map<String,List<TagModel>>? = null
+                        if(selectedGroup.contains("ตามตำแหน่ง")){
+                            groupTag = data.groupBy {
+                                it.environment?.location ?: run {
+                                    "ไม่ทราบตำแหน่ง"
+                                }
+                            }
+                        } else if(selectedGroup.contains("ตามสถานะ")){
+                            groupTag = data.groupBy {
+                                it.environment?.status ?: run {
+                                    "ไม่ทราบสถานะ"
+                                }
                             }
                         }
 
-                        if (filterData.isNotEmpty()) {
-                            val item = filterData[0]
-                            val tag = TagModel(
-                                name = item.name,
-                                address = epc,
-                                rssi = rssi,
-                                callback = tagCallback,
-                                image = item.image
-                            )
-                            data.add(tag)
-                        } else {
-                            val tag = TagModel(address = epc, rssi = rssi, callback = tagCallback)
-                            data.add(tag)
+                        groupTag?.let { groupTags ->
+
+
+                            groupTags.forEach { name, items ->
+                                val smallGroup: MutableList<TagModel> = ArrayList()
+                                smallGroup.addAll(items)
+                                smallGroup.sortByDescending {
+                                    it.rssi
+                                }
+                                groupData.add(TitleCounterModel(name=name, count = items.size))
+                                groupData.addAll(smallGroup)
+
+                            }
+                            adapter.addAll(groupData)
                         }
 
-
                     }
-                    data.sortByDescending { it.rssi }
-                    adapter.addAll(data)
+
                 })
             }
 

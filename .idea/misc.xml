@@ -21,11 +21,17 @@
         <entry key="app/src/main/res/layout/fragment_first.xml" value="0.19610507246376813" />
         <entry key="app/src/main/res/layout/fragment_home_devices.xml" value="0.19610507246376813" />
         <entry key="app/src/main/res/layout/fragment_home_devices_list.xml" value="0.19610507246376813" />
+        <entry key="app/src/main/res/layout/fragment_list_dialog.xml" value="0.22418478260869565" />
+        <entry key="app/src/main/res/layout/fragment_list_dialog_list.xml" value="0.22418478260869565" />
         <entry key="app/src/main/res/layout/fragment_scanner.xml" value="0.22418478260869565" />
         <entry key="app/src/main/res/layout/fragment_scanner_list.xml" value="0.21799621582031256" />
         <entry key="app/src/main/res/layout/fragment_second.xml" value="0.19610507246376813" />
-        <entry key="app/src/main/res/layout/fragment_tags.xml" value="0.2477986432503963" />
+        <entry key="app/src/main/res/layout/fragment_tags.xml" value="0.35532836914062504" />
+        <entry key="app/src/main/res/layout/scanner_card.xml" value="0.15364583333333334" />
+        <entry key="app/src/main/res/layout/scanner_title.xml" value="0.15364583333333334" />
+        <entry key="app/src/main/res/layout/tag_area_sheet.xml" value="0.22418478260869565" />
         <entry key="app/src/main/res/layout/tag_sheet.xml" value="0.22418478260869565" />
+        <entry key="app/src/main/res/layout/unknown_item.xml" value="0.15364583333333334" />
         <entry key="app/src/main/res/menu/menu_main.xml" value="0.14583333333333334" />
         <entry key="app/src/main/res/menu/nav_menu.xml" value="0.19157562255859373" />
       </map>

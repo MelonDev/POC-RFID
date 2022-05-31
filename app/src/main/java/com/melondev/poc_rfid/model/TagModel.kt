@@ -7,11 +7,14 @@ data class TagModel(
     var address: String? = null,
     var rssi: Int? = null,
     var image: Int? = null,
-    var action :TagActionModel? = null,
+    var environment :TagEnvironment? = null,
     var callback: TagCallback? = null
-)
+) : BaseModel()
 
-data class TagActionModel(
-    var waterEnabled :Boolean = false,
-    var fertilizerEnabled :Boolean = false
-)
+data class TagEnvironment(
+    var water :Boolean = false,
+    var fertilizer :Boolean = false,
+    var location: String? = null,
+    var status: String? = null,
+
+    )

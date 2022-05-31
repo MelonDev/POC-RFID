@@ -20,6 +20,12 @@
 
     <color name="enableColor">#72AF3F</color>
     <color name="disableColor">#E45050</color>
+    <color name="itemBackgroundColor">#F2F2F2</color>
+    <color name="itemOnBackgroundColor">#3C3C3C</color>
+    <color name="itemEnableColor">#0772C6</color>
+    <color name="itemOnEnableColor">#FFFFFF</color>
+
+
 
 
 
