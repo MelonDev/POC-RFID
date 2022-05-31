@@ -9,7 +9,6 @@ import androidx.core.content.ContextCompat
 import com.melondev.poc_rfid.R
 import com.melondev.poc_rfid.callback.ItemCallback
 
-import com.melondev.poc_rfid.placeholder.PlaceholderContent.PlaceholderItem
 import com.melondev.poc_rfid.databinding.FragmentListDialogBinding
 import com.melondev.poc_rfid.model.DeviceModel
 import com.melondev.poc_rfid.model.ItemModel

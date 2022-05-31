@@ -24,6 +24,11 @@ open class SharePref(context: Context) {
         editor.putString(key.uppercase(), value)
     }
 
+    fun putStringArray(key: String, value: List<String>?) {
+        val data = value?.toHashSet()
+        editor.putStringSet(key.uppercase(),data)
+    }
+
     fun putDouble(key: String, value: Double) {
         editor.putLong(key.uppercase(), value.toLong())
     }
@@ -43,6 +48,10 @@ open class SharePref(context: Context) {
 
     fun getDouble(key: String, default: Double): Double {
         return sharedPref.getLong(key.uppercase(), default.toLong()).toDouble()
+    }
+
+    fun getStringArray(key: String, default: List<String>?): List<String>? {
+        return sharedPref.getStringSet(key.uppercase(),default?.toHashSet())?.toList()
     }
 
     fun commit() {

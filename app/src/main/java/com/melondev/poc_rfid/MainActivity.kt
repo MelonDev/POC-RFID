@@ -64,8 +64,8 @@ class MainActivity : AppCompatActivity() {
         sharedPref.putBoolean("E2806894000050106F36D612@water", false)
         sharedPref.putBoolean("E2806894000050106F36D612@fertilizer", false)
         sharedPref.putString("E2806894000050106F36D612@location", "แปลง A")
-        sharedPref.putString("E2806894000050106F36D612@status", "เฉา")
-        sharedPref.putString("E2806894000050106F36D612@image_report", null)
+        sharedPref.putString("E2806894000050106F36D612@status", "ขาดน้ำ")
+        sharedPref.putStringArray("E2806894000050106F36D612@lots", listOf("A01@20","A02@15","A03@6"))
 
         sharedPref.putString("E2005175881902411140A540@name", "ต้นมะขาม")
         sharedPref.putInt("E2005175881902411140A540@image", R.drawable.tamarind)
@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
         sharedPref.putBoolean("E2005175881902411140A540@fertilizer", false)
         sharedPref.putString("E2005175881902411140A540@location", "แปลง C")
         sharedPref.putString("E2005175881902411140A540@status", "ขาดน้ำ")
-        sharedPref.putString("E2005175881902411140A540@image_report", null)
+        sharedPref.putStringArray("E2005175881902411140A540@lots", listOf("A01@50","B01@10","B02@18"))
 
         sharedPref.commit()
     }
