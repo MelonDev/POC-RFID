@@ -41,7 +41,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="จัดกลุ่ม"
+                        android:text="รูปแบบ"
                         android:textColor="#3C3C3C"
                         android:textSize="14sp"
                         android:textStyle="normal" />
@@ -51,7 +51,7 @@
 
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ไม่จัดกลุ่ม"
+                        android:text="ไม่มีรูปแบบ"
                         android:textColor="#3C3C3C"
                         android:textSize="18sp"
                         android:textStyle="bold" />

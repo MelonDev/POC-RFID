@@ -10,6 +10,8 @@
         android:title="@string/fragment_tags" />
     <item
         android:id="@+id/scannerFragment"
-        android:icon="@drawable/ic_baseline_style_24"
+        android:icon="@drawable/ic_baseline_timelapse_24"
         android:title="@string/fragment_scanner" />
+
+
 </menu>

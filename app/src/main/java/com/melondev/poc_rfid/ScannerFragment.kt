@@ -34,7 +34,7 @@ class ScannerFragment : Fragment() {
 
     private lateinit var sharedPref: SharePref
 
-    private var selectedGroup: String = "ไม่จัดกลุ่ม"
+    private var selectedGroup: String = "ไม่มีรูปแบบ"
 
 
     private lateinit var groupCardView: CardView
@@ -92,8 +92,8 @@ class ScannerFragment : Fragment() {
             choices.apply {
                 add(
                     ItemModel(
-                        name = "ไม่จัดกลุ่ม",
-                        enable = selectedGroup.contains("ไม่จัดกลุ่ม")
+                        name = "ไม่มีรูปแบบ",
+                        enable = selectedGroup.contains("ไม่มีรูปแบบ")
                     )
                 )
                 add(
@@ -114,16 +114,18 @@ class ScannerFragment : Fragment() {
                         enable = selectedGroup.contains("ตามสถานะ")
                     )
                 )
+
                 add(
                     ItemModel(
                         name = "ตามล็อต",
                         enable = selectedGroup.contains("ตามล็อต")
                     )
                 )
+
             }
 
             showDialog(
-                title = "กรุณาเลือกการจัดกลุ่ม",
+                title = "กรุณาเลือกรูปแบบการนับ",
                 choices = choices,
                 callback = groupItemCallback
             )
@@ -320,31 +322,25 @@ class ScannerFragment : Fragment() {
                                 sharedPref.getBoolean("$epc@fertilizer", false)
                             val location: String? = sharedPref.getString("$epc@location", null)
                             val status: String? = sharedPref.getString("$epc@status", null)
-                            val lots: List<String>? = sharedPref.getStringArray("$epc@lots", null)
+                            val lot: String? = sharedPref.getString("$epc@lot", null)
 
-                            if (lots != null && selectedGroup.contains("ตามล็อต")){
+                            if (lot != null && selectedGroup.contains("ตามล็อต")) {
 
-                                lots.forEach { lot ->
-                                    val lotSet = lot.split("@")
-                                    val lotName: String = lotSet[0].toString()
-                                    val lotValue: Int = lotSet[1].toInt()
-
-                                    val tag = TagModel(
-                                        name = name,
-                                        address = epc,
-                                        rssi = rssi,
-                                        image = image,
-                                        lot = TagLot(name = lotName, value = lotValue),
-                                        callback = tagCallback,
-                                        environment = TagEnvironment(
-                                            water = water,
-                                            fertilizer = fertilizer,
-                                            location = location,
-                                            status = status
-                                        )
+                                val tag = TagModel(
+                                    name = name,
+                                    address = epc,
+                                    rssi = rssi,
+                                    image = image,
+                                    lot = lot,
+                                    callback = tagCallback,
+                                    environment = TagEnvironment(
+                                        water = water,
+                                        fertilizer = fertilizer,
+                                        location = location,
+                                        status = status
                                     )
-                                    data.add(tag)
-                                }
+                                )
+                                data.add(tag)
 
                             } else {
                                 val tag = TagModel(
@@ -373,7 +369,7 @@ class ScannerFragment : Fragment() {
 
                     val groupData: MutableList<BaseModel> = ArrayList()
 
-                    if (selectedGroup.contains("ไม่จัดกลุ่ม")) {
+                    if (selectedGroup.contains("ไม่มีรูปแบบ")) {
                         data.sortByDescending {
                             it.rssi
                         }
@@ -403,7 +399,7 @@ class ScannerFragment : Fragment() {
                         } else if (selectedGroup.contains("ตามล็อต")) {
 
                             groupTag = data.groupBy {
-                                it.lot?.name ?: run {
+                                it.lot ?: run {
                                     "ไม่ทราบล็อต"
                                 }
                             }
@@ -414,44 +410,22 @@ class ScannerFragment : Fragment() {
 
 
                         groupTag?.let { groupTags ->
-                            val gt = groupTags.toList().sortedBy { (key, _) -> key}.toMap()
+                            val gt = groupTags.toList().sortedBy { (key, _) -> key }.toMap()
 
 
                             gt.forEach { name, items ->
                                 val smallGroup: MutableList<TagModel> = ArrayList()
-
-                                if (selectedGroup.contains("ตามล็อต")) {
-                                    var value = 0
-                                    items.forEach { item ->
-                                        item.lot?.let {
-                                            value += it.value
-                                        }
-                                        smallGroup.add(item)
-                                    }
-                                    smallGroup.sortByDescending {
-                                        it.lot?.value ?: run {
-                                            it.rssi
-                                        }
-                                    }
-                                    groupData.add(
-                                        TitleCounterModel(
-                                            name = name,
-                                            count = value
-                                        )
-                                    )
-                                }else {
-
-                                    smallGroup.addAll(items)
-                                    smallGroup.sortByDescending {
-                                        it.rssi
-                                    }
-                                    groupData.add(
-                                        TitleCounterModel(
-                                            name = name,
-                                            count = items.size
-                                        )
-                                    )
+                                smallGroup.addAll(items)
+                                smallGroup.sortByDescending {
+                                    it.rssi
                                 }
+
+                                groupData.add(
+                                    TitleCounterModel(
+                                        name = if (selectedGroup.contains("ตามล็อต")) (if (name.contains("ไม่ทราบล็อต")) name else "ล็อต $name") else name,
+                                        count = items.size
+                                    )
+                                )
                                 groupData.addAll(smallGroup)
 
 

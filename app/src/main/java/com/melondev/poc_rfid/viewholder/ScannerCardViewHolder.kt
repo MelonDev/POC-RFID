@@ -16,13 +16,10 @@ class ScannerCardViewHolder(binding: ScannerCardBinding) :
     fun bind(tag: TagModel) {
         nameView.text = tag.name ?: "ไม่ทราบชี่อ"
         addressView.text = "ไอดี: ${(tag.address ?: "ไม่ทราบ")}"
-        tag.lot?.let {
-            rssiView.text = "จำนวน: ${(it.value ?: 0)} ต้น"
 
-        }?: run {
-            rssiView.text = "ความแรงสัญญาณ: ${(tag.rssi ?: "ไม่ทราบ")}"
+        rssiView.text = "ความแรงสัญญาณ: ${(tag.rssi ?: "ไม่ทราบ")}"
 
-        }
+        
 
         layoutView.setOnClickListener {
             tag.callback?.onClick(tag)

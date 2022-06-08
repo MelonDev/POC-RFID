@@ -8,11 +8,9 @@ data class TagModel(
     var rssi: Int? = null,
     var image: Int? = null,
     var environment :TagEnvironment? = null,
-    var lot: TagLot? = null,
+    var lot: String? = null,
     var callback: TagCallback? = null
 ) : BaseModel()
-
-data class TagLot(var name: String, var value: Int = 0)
 
 data class TagEnvironment(
     var water :Boolean = false,

@@ -18,4 +18,5 @@
         android:name="com.melondev.poc_rfid.TagsFragment"
         android:label="@string/fragment_scanner"
         tools:layout="@layout/fragment_tags" />
+
 </navigation>

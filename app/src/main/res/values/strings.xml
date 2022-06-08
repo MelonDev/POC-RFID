@@ -16,7 +16,9 @@
 
     <string name="fragment_devices">อุปกรณ์</string>
     <string name="fragment_tags">แท็ก</string>
-    <string name="fragment_scanner">จัดกลุ่ม</string>
+    <string name="fragment_scanner">นับจำนวน</string>
+    <string name="fragment_counter">นับจำนวน</string>
+
 
 
 </resources>
